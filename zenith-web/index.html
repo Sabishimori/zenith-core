@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zenith — a gaming companionship platform</title>
+    <meta
+      name="description"
+      content="Zenith matches on conversation and safety rather than rank. A game mate is not the person who plays best, it is the person you actually click with."
+    />
+    <link rel="icon" href="/img/mark.webp" type="image/webp" />
+
+    <!-- Fonts are self-hosted in /public/fonts and declared in tokens.css.
+         Preload the two that set first paint. -->
+    <link
+      rel="preload"
+      href="/fonts/switzer-300.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/dmmono-500.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <!-- Runs before any module, which is the whole point of it being here.
+
+         A module script is deferred, so by the time main.jsx executes the
+         browser has already decided what to do about restoring the previous
+         scroll position — setting history.scrollRestoration there loses the
+         race. In the head it does not.
+
+         Only a reload is reset. Back and forward keep "auto", because
+         returning to a page someone was already reading and dumping them at
+         the top is the browser behaviour everyone complains about.
+
+         `is-loading` is set here for the same reason: it holds the page
+         still and keeps the masthead's arrival animation paused, and a
+         render later would show a frame of the page under the loader.
+         Preloader.jsx takes it off again — which is why this belongs to
+         index.html alone. contact.html has no loading screen, so nothing
+         there would ever remove it. -->
+    <script>
+      document.documentElement.classList.add('is-loading');
+      try {
+        var nav = performance.getEntriesByType('navigation')[0];
+        var isReload = nav
+          ? nav.type === 'reload'
+          : performance.navigation && performance.navigation.type === 1;
+        /* Only when there is no anchor. "manual" suppresses the
+           fragment scroll along with the position restore, so setting it
+           on a reload of /#faq lands the reader at the top instead of at
+           the FAQ. With a hash present the browser's own behaviour is
+           already the right one. */
+        /* Always assigned, never only set. scrollRestoration belongs to
+           the history entry and survives reloads of it — so leaving the
+           else case alone means a value set on one load silently governs
+           the next, and /#faq inherits the "manual" that a previous
+           hashless reload turned on. */
+        history.scrollRestoration =
+          isReload && !location.hash ? 'manual' : 'auto';
+
+        /* And the part that actually works.
+
+           "manual" is the documented way to stop Chrome restoring the old
+           scroll position and, measured here, it does not: a reload from
+           12000px came back to 12014 with manual set. Rather than race the
+           restore after the fact, this removes what it would restore TO —
+           the position is saved as the page unloads, so a page that leaves
+           at the top has nothing to come back to.
+
+           No hash: an anchored URL is a destination the reader chose, and
+           returning to it is correct. */
+        addEventListener('pagehide', function () {
+          try {
+            if (!location.hash) window.scrollTo(0, 0);
+          } catch (err) {
+            /* Nothing useful to do while the page is going away. */
+          }
+        });
+      } catch (e) {
+        /* Losing the reset is survivable; throwing here is not. */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/cleo/main.jsx"></script>
+  </body>
+</html>

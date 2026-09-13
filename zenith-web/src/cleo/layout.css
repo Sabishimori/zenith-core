@@ -1,0 +1,2770 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Section layouts.
+
+   Every measurement here comes from the token ladder in tokens.css — no
+   raw numbers unless the value is genuinely one-off. Cleo's rhythm is what
+   this is reproducing: wide air between sections, media that runs to the
+   gutter, text held to a short measure beside it.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ═══ Preloader ════════════════════════════════════════════════
+   The mark, a hairline track, and a zero-padded count on the page's own
+   ink. Three elements, and the restraint is the design: this is the first
+   thing anyone sees and it has to promise a quiet site, not a loud one.
+
+   It sits on --ink rather than on black so it is the same surface as the
+   masthead bar that the mark is about to drop into — the loader leaves and
+   the bar arrives on what reads as the same material.
+   ────────────────────────────────────────────────────────────────── */
+
+/* The page cannot be scrolled while it is covered, and the masthead holds
+   its arrival at the first keyframe until the class comes off. */
+html.is-loading {
+  overflow: hidden;
+}
+html.is-loading .masthead__bar,
+html.is-loading .masthead__nav {
+  animation-play-state: paused;
+}
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  /* Over the cursor (300) as well as everything else: while this is up it
+     is the only thing on the page. */
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  transition: opacity 0.6s var(--ease);
+}
+/* It leaves by fading rather than sliding: a panel that slides off reveals
+   the page in a direction, and the direction would compete with the mark
+   dropping into the bar a moment later. */
+.preloader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preloader__mark {
+  display: block;
+  width: 58px;
+  height: auto;
+}
+
+.preloader__track {
+  position: relative;
+  width: 140px;
+  height: 1px;
+  margin-top: 34px;
+  background: rgba(255, 255, 255, 0.16);
+}
+/* --p is written by the component each frame. `width` and not a transform,
+   because the fill has to end exactly on the track's right edge and a
+   scaled element would carry its own rounding error there. */
+.preloader__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--p, 0%);
+  /* White, not the brand violet. On ink, #5b3df5 sits too close in
+     luminance to the track it is filling — the bar reads as one flat line
+     and the progress is invisible. The mark above is already carrying the
+     violet; this only has to be legible. */
+  background: #fff;
+}
+
+.preloader__count {
+  margin: 16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.42);
+  /* Tabular figures, so a 0 becoming a 1 never nudges the line. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══ Cursor ═══════════════════════════════════════════════════
+   A dot on the pointer and a ring easing after it. Cursor.jsx owns the
+   movement; everything here is what the two circles look like and how they
+   answer what is underneath them.
+
+   `cursor: none` is scoped to html.has-cursor, which the component only
+   adds once it has confirmed a fine pointer, confirmed the reader has not
+   asked for less motion, and started its own loop. Nothing here can leave
+   a page with no pointer on it. */
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  /* Above the masthead (100) and the skip link (200): the pointer is the
+     one thing that is never behind anything. */
+  z-index: 300;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-soft);
+}
+/* Switched on by the first real pointermove, not on mount — on load the
+   system cursor may be anywhere, and fading two circles in at the centre
+   of the page before the reader has touched the mouse reads as a bug. */
+html.cursor-on .cursor {
+  opacity: 1;
+}
+
+/* The positioner. Moved by the frame loop, never scaled. */
+.cursor__at {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+}
+
+/* The circles. Scaled, never moved — their negative margins are what put
+   their centres on the positioner's origin, so a scale stays centred on
+   the pointer instead of growing away from it. */
+.cursor__dot,
+.cursor__ring {
+  display: block;
+  border-radius: 50%;
+}
+
+.cursor__dot {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background: var(--ink);
+  transition:
+    transform 0.3s var(--ease),
+    background-color 0.3s var(--ease-soft);
+}
+
+.cursor__ring {
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  box-shadow: inset 0 0 0 1px var(--hair-strong);
+  transition:
+    transform 0.34s var(--ease),
+    background-color 0.34s var(--ease-soft),
+    box-shadow 0.34s var(--ease-soft);
+}
+
+/* Over something clickable the ring opens and takes the brand, and the dot
+   shrinks into it — the pair reads as one target being surrounded rather
+   than as two shapes changing size. */
+html.cursor-over .cursor__ring {
+  transform: scale(1.5);
+  background: rgba(91, 61, 245, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(91, 61, 245, 0.35);
+}
+html.cursor-over .cursor__dot {
+  transform: scale(0.55);
+  background: var(--violet);
+}
+
+/* The press is answered by the cursor itself, ahead of whatever the click
+   is about to do. */
+html.cursor-down .cursor__ring {
+  transform: scale(0.8);
+}
+html.cursor-down .cursor__dot {
+  transform: scale(0.7);
+}
+html.cursor-over.cursor-down .cursor__ring {
+  transform: scale(1.28);
+}
+
+/* Over a dark surface both circles invert. The violet hover state holds on
+   either ground, so only the resting ink values need a light counterpart. */
+html.cursor-invert .cursor__dot {
+  background: var(--void);
+}
+html.cursor-invert .cursor__ring {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+html.cursor-invert.cursor-over .cursor__ring {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+html.cursor-invert.cursor-over .cursor__dot {
+  background: #fff;
+}
+
+html.has-cursor,
+html.has-cursor * {
+  cursor: none;
+}
+/* The one place the system cursor still says something the dot cannot: an
+   I-beam marks where the caret will land. */
+html.has-cursor input,
+html.has-cursor textarea,
+html.has-cursor [contenteditable='true'] {
+  cursor: text;
+}
+
+/* ═══ Masthead ═══════════════════════════════════════════════════════════
+   One dark bar centred over the page, not three pills floating apart.
+
+   The bar is the inverse of everything under it — near-black on warm paper —
+   which is what lets it stay a fixed element over fifteen screens of light
+   content without needing a translucent ground, a blur, or a shadow that
+   grows on scroll to stay legible. A solid dark object simply never has a
+   contrast problem with what passes beneath it.
+
+   The mark sits inside it. That is not a return to the pill it used to
+   wear: a logo alone in its own little card reads as a third button, where
+   a logo at the left end of a navbar reads as the thing the bar belongs to.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.masthead {
+  position: fixed;
+  inset: var(--header-gutter) var(--gutter-outer) auto;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  /* The header is a centred bar inside a full-width fixed strip, so the
+     strip itself must not eat clicks on either side of it. */
+  pointer-events: none;
+}
+
+.masthead__bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1100px;
+  height: 56px;
+  /* Less on the right than the left: the last nav item is text with its own
+     side bearing, where the mark is a hard-edged image. */
+  padding: 0 var(--spacing-24px) 0 var(--spacing-20px);
+  /* Its own radius, not a token. The ladder is built for panels and starts
+     at 16px, which on a 56px bar is already halfway to a pill — and the
+     reference's bar is squarer than that. */
+  border-radius: 14px;
+  /* Dark glass, not a solid slab. The page has to read THROUGH it — in the
+     reference the headline's colour carries on visibly behind the bar, and
+     that is most of why it feels laid over the page rather than cut into
+     it.
+   *
+     78% is a floor rather than a preference: the labels are 12px spaced
+     caps, and much more transparency than this drops them under 4.5:1
+     against whatever happens to be scrolling past underneath. */
+  background: rgba(20, 18, 28, 0.78);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: 0 2px 6px -2px rgba(20, 18, 28, 0.18);
+  /* The links are clipped by the bar's own edge while it opens, so they are
+     uncovered from the right rather than fading in place. */
+  overflow: hidden;
+  /* Size and position are set once by the arrival animation and never move
+     again; only the ground and the shadow answer scrolling. */
+  transition:
+    background-color 0.4s var(--ease),
+    box-shadow 0.4s var(--ease);
+}
+
+/* Over the hero the bar floats on near-empty ground and can afford to be
+   glass. Past it there is content running underneath, so it closes up and
+   takes a real shadow — the busier the backdrop, the more the 12px labels
+   need holding.
+
+   Masthead.jsx has been computing this state all along; the rule that
+   consumed it was lost when the header was rebuilt as a single bar, which
+   left the class doing nothing. */
+.masthead.is-lifted .masthead__bar {
+  background: rgba(20, 18, 28, 0.9);
+  box-shadow: 0 14px 34px -16px rgba(20, 18, 28, 0.5);
+}
+
+/* ── Arriving ────────────────────────────────────────────────────
+   Two beats, in sequence, once on load:
+
+     1. the mark drops in as a square from above its own gutter;
+     2. the square lands, holds for a beat, then opens sideways into the bar
+        and the links arrive with it.
+
+   They are two animations rather than one because a box that grows while it
+   is still falling reads as a glitch. The second is simply delayed past the
+   end of the first, and `backwards` is what makes the delay do the work:
+   during it the bar is held at the opening animation's FROM state — a 56px
+   square — so it falls as a square without anything having to say so.
+
+   `backwards` and not `both`, deliberately. With `both` the final keyframe
+   would stick permanently and outrank the responsive padding below; with
+   `backwards` the element simply returns to its own CSS once the animation
+   is over, which is where it was always going. */
+.masthead__bar {
+  animation:
+    masthead-drop 0.6s var(--ease) 0.15s backwards,
+    masthead-open 0.74s var(--ease) 0.88s backwards;
+}
+@keyframes masthead-drop {
+  from {
+    transform: translateY(-96px);
+  }
+}
+@keyframes masthead-open {
+  from {
+    /* 56px is the bar's own height, so the shape it opens out of is a
+       perfect square and the radius it already carries reads as correct at
+       both sizes. */
+    max-width: 56px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+/* The links come in just behind the opening edge rather than with it, so
+   the bar reads as making room and the labels as filling it. */
+.masthead__nav {
+  animation: masthead-links 0.46s var(--ease) 1.18s backwards;
+}
+@keyframes masthead-links {
+  from {
+    opacity: 0;
+  }
+}
+
+.masthead__mark {
+  flex: none;
+  display: block;
+  line-height: 0;
+  z-index: 1;
+  transition: opacity 0.3s var(--ease);
+}
+.masthead__mark:hover {
+  opacity: 0.7;
+}
+.masthead__mark img {
+  display: block;
+  width: 44px;
+  height: auto;
+}
+
+/* ── The links ──────────────────────────────────────────────────────────
+   Small spaced caps pushed to the far end of the bar. At 12px the letters
+   need the tracking to stay countable; at that tracking they stop reading
+   as words and start reading as a row of labels, which is the intent. */
+.masthead__nav {
+  display: none;
+  align-items: center;
+  gap: clamp(16px, 1.9vw, 34px);
+  /* The one rule that makes the composition: mark hard left, links hard
+     right, all the slack in the middle. */
+  margin-left: auto;
+  /* Never compressed while the bar is opening — the row keeps its full
+     width and is clipped by the bar's edge instead, which is what makes it
+     read as being uncovered rather than as being stretched. */
+  flex: none;
+  white-space: nowrap;
+}
+.masthead__nav a {
+  position: relative;
+  font-size: 12px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  transition: color 0.3s var(--ease);
+}
+.masthead__nav a:hover,
+.masthead__nav a:focus-visible {
+  color: #fff;
+}
+
+/* The component already computes which section the reader is in. The marker
+   is an underline rather than a colour swap, because a coloured word among
+   five uncoloured ones reads as a different KIND of link. */
+.masthead__nav a.is-active {
+  color: #fff;
+}
+.masthead__nav a.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 2px;
+  border-radius: 2px;
+  /* The bar's only colour. On ink, the brand violet is bright enough to
+     carry a 2px rule where it would not carry 12px type. */
+  background: var(--violet);
+}
+
+/* The call to action is a link like the others, marked only by being solid
+   white — enough to be found last in the row without becoming a button and
+   breaking the bar back into two objects. */
+.masthead__nav a.is-last {
+  color: #fff;
+}
+.masthead__nav a.is-last::before {
+  content: '';
+  position: absolute;
+  left: calc(clamp(16px, 1.9vw, 34px) / -2);
+  top: 50%;
+  translate: 0 -50%;
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── The label roll ─────────────────────────────────────────────────────
+   On hover the label leaves through the top and an identical one arrives
+   from the bottom. Two copies of the same word rather than one word fading:
+   a fade says the label changed, a roll says the link answered.
+
+   Generic rather than scoped to one component, because the only thing it
+   needs from its parent is a hover — which is why the selector hangs off
+   `a:hover >` and not off any particular block. The clip is its own element
+   so it can be exactly one line tall; the padding/margin pair gives
+   descenders somewhere to go without adding height to that line. */
+.roll {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding-block: 3px;
+  margin-block: -3px;
+}
+.roll span {
+  display: block;
+  transition: transform 0.44s var(--ease);
+}
+/* The arriving copy waits one full line below, inside the clip. 105% rather
+   than 100% so no sliver of it shows at rest. */
+.roll__next {
+  position: absolute;
+  inset: 3px 0 auto;
+  transform: translateY(105%);
+}
+a:hover > .roll .roll__now,
+a:focus-visible > .roll .roll__now {
+  transform: translateY(-105%);
+}
+a:hover > .roll .roll__next,
+a:focus-visible > .roll .roll__next {
+  transform: translateY(0);
+}
+
+/* An arrow that leads its label by a hair — it starts moving first, so the
+   control reads as going somewhere rather than as merely lighting up. */
+.pill__arrow {
+  display: block;
+  transition: transform 0.44s var(--ease);
+}
+
+/* A roll is two copies of one word moving past each other; with the motion
+   removed it would be two identical labels stacked in a box. The clip keeps
+   the first and the second never arrives. And a bar that drops in and then
+   closes itself on scroll is exactly the kind of movement being declined:
+   it arrives in place, open, and stays that way. */
+@media (prefers-reduced-motion: reduce) {
+  .masthead__bar,
+  .masthead__nav {
+    animation: none;
+  }
+  .roll span,
+  .pill__arrow {
+    transition: none;
+  }
+  a:hover > .roll .roll__now,
+  a:focus-visible > .roll .roll__now {
+    transform: none;
+  }
+  a:hover > .roll .roll__next,
+  a:focus-visible > .roll .roll__next {
+    transform: translateY(105%);
+  }
+}
+
+@media only screen and (min-width: 900px) {
+  .masthead__nav {
+    display: flex;
+  }
+}
+
+/* Under 900px six labels in spaced caps will not fit beside the mark at any
+   size worth reading, so the row collapses to the one link that is a
+   destination rather than a jump — the section anchors are all still in the
+   footer index. The divider goes with the others it was dividing. */
+@media only screen and (max-width: 899px) {
+  .masthead__nav {
+    display: flex;
+    margin-left: auto;
+  }
+  .masthead__nav a:not(.is-last) {
+    display: none;
+  }
+  .masthead__nav a.is-last::before {
+    display: none;
+  }
+  .masthead__bar {
+    height: 50px;
+    padding-inline: var(--spacing-16px);
+  }
+  .masthead__mark img {
+    width: 38px;
+  }
+}
+
+
+/* ═══ Hero ═══════════════════════════════════════════════════════════════
+   Centred, small, on the plain ground, with nothing behind it. The imagery
+   begins below the fold in its own panel. Measured on Cleo at 1920: h1
+   48/300 centred, sub 20/300 on a 450px measure, one centred pill. */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 78vh;
+  padding: calc(var(--header-gutter) + 90px) var(--gutter-outer)
+    var(--item-spacer-large);
+  text-align: center;
+}
+
+/* The one radial bloom on the page, behind the hero and nowhere else. It
+   scales up as it fades in, so the first thing that happens on load is the
+   ground opening rather than text arriving on a flat field. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -10% -20% auto;
+  height: 120%;
+  z-index: -1;
+  background: var(--wash);
+  filter: blur(12px);
+  transform: scale(0.9);
+  opacity: 0;
+  animation: hero-bloom 1.6s var(--ease) 0.1s forwards;
+  pointer-events: none;
+}
+@keyframes hero-bloom {
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.hero__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24px);
+  max-width: 900px;
+}
+
+.hero__title {
+  /* Same max() floor as the rest of the scale — this rule predates the
+     shared type roles and was carrying its own copy of the formula, so it
+     had the 768px cliff even after the roles were fixed. */
+  font-size: max(
+    48px,
+    calc(
+      48px - 48px * var(--scale-modifier) + 100vw * 48 /
+        var(--target-window-width) * var(--scale-modifier)
+    )
+  );
+  font-weight: var(--fw-light);
+  line-height: 1.08333;
+  letter-spacing: -0.021em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.hero__sub {
+  max-width: 450px;
+  margin: 0;
+  font-size: max(
+    20px,
+    calc(
+      20px - 20px * var(--scale-modifier) + 100vw * 20 /
+        var(--target-window-width) * var(--scale-modifier)
+    )
+  );
+  font-weight: var(--fw-light);
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+/* Caps the small-screen ramp, matching the shared type roles. This lives
+   here rather than in tokens.css because layout.css is imported second —
+   an equal-specificity rule there would lose the cascade. */
+@media only screen and (max-width: 767px) {
+  .hero__title {
+    font-size: min(
+      48px,
+      calc(
+        48px - 48px * var(--scale-modifier) + 100vw * 48 /
+          var(--target-window-width) * var(--scale-modifier)
+      )
+    );
+  }
+  .hero__sub {
+    font-size: min(
+      20px,
+      calc(
+        20px - 20px * var(--scale-modifier) + 100vw * 20 /
+          var(--target-window-width) * var(--scale-modifier)
+      )
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ═══ Panels ═════════════════════════════════════════════════════════════
+   The page's main surface. Near a full screen tall, 8px from the page edge,
+   square bottom-left corner, caption low in the frame. */
+
+.section-flush {
+  padding-block: var(--gutter-card);
+}
+
+.panel-row {
+  display: grid;
+  gap: var(--gutter-card);
+  padding-inline: var(--gutter-card);
+}
+
+.panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: var(--panel-h);
+  border-radius: var(--border-radius-medium) var(--border-radius-medium)
+    var(--border-radius-medium) 0;
+  background: var(--raised);
+}
+
+.panel__media,
+.panel__media > * {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.panel__media img,
+.panel__media video,
+.panel__media canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Panel captions are white and sit directly on the media with nothing
+   between them. That was fine while the slots were empty — the placeholder
+   is a flat dark panel — and it passes against a dark photograph by luck.
+   Measured over the placeholder imagery, nine of ten captions cleared 4.5:1
+   and one landed on a bright patch at 1.0:1. A real photo puts every one of
+   them at the mercy of whatever happens to be behind the words.
+   Bottom-weighted because the caption is bottom-left, and strong enough at
+   the floor that even a white region reads: over pure white this leaves the
+   text at ~5:1. The panel sets z-index 0 on the media and 2 on the inner
+   column, so this sits between the picture and the type. */
+.panel__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(10, 9, 14, 0.82) 0%,
+    rgba(10, 9, 14, 0.58) 26%,
+    rgba(10, 9, 14, 0.14) 58%,
+    rgba(10, 9, 14, 0) 78%
+  );
+}
+/* A slot inside a panel fills it, so its own aspect ratio must not win. */
+.panel__media .slot {
+  aspect-ratio: auto !important;
+  border-radius: 0;
+  box-shadow: none;
+  /* `.panel__media > *` already says absolute/inset:0, but `.slot` sets its
+     own `position: relative` and — same specificity, declared later — wins.
+     On a relative box `inset` only offsets, it does not stretch, so the slot
+     fell back to content height: an <img height:100%> inside an auto-height
+     parent resolves to 0, and the panel's media vanished.
+     This was invisible while the slots were empty, because the labelled
+     placeholder is a flex box with text in it and therefore HAD a height.
+     Filling the slots with real images is what surfaced it — and with the
+     media gone, the panels' white captions were sitting on the light page
+     ground at 1.13:1. */
+  position: absolute;
+  inset: 0;
+}
+
+.panel__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--scrim);
+  pointer-events: none;
+}
+
+.panel__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: var(--panel-h);
+  padding: var(--spacing-40px);
+  gap: var(--spacing-24px);
+}
+
+.panel__top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20px);
+  /* The statement is inset further than the caption — 64px against 40px. */
+  padding: var(--spacing-24px) var(--spacing-24px) 0;
+}
+
+.panel__mid {
+  margin-top: auto;
+}
+
+/* Caption low-left: the words sit in the corner of the image, not over it. */
+.panel__caption {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+.panel__cta {
+  margin-top: var(--spacing-16px);
+}
+
+.panel--light .c-statement,
+.panel--light .c-title,
+.panel--light .c-eyebrow {
+  color: var(--ink);
+}
+.panel--light .c-body {
+  color: var(--ink-soft);
+}
+
+@media only screen and (min-width: 768px) {
+  .panel-row--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel-row--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ═══ Showcase — the scrubbed panel ══════════════════════════════════════ */
+
+.showcase {
+  position: relative;
+  height: 220vh;
+  padding-inline: var(--gutter-card);
+}
+
+.showcase__stick {
+  position: sticky;
+  top: var(--gutter-card);
+}
+
+.showcase__panel {
+  min-height: calc(100vh - var(--gutter-card) * 2);
+  background:
+    radial-gradient(
+      110% 80% at 50% 100%,
+      rgba(107, 78, 255, 0.3) 0%,
+      rgba(107, 78, 255, 0.05) 50%,
+      transparent 78%
+    ),
+    var(--raised);
+}
+.showcase__panel .panel__inner {
+  min-height: calc(100vh - var(--gutter-card) * 2);
+}
+/* This panel is pinned, so unlike the others it never scrolls out from
+   under the fixed masthead — its heading has to clear the mark rather than
+   pass beneath it. */
+.showcase__panel .panel__top {
+  padding-top: 72px;
+}
+.showcase__panel .panel__scrim {
+  display: none;
+}
+
+.showcase__canvas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-block: var(--item-spacer-large);
+}
+
+/* The phone, in CSS. A rounded frame that owns the 393×852 ratio so the
+   screenshot can never stretch, and one diagonal sheen over it. */
+.device {
+  width: min(35vh, 260px);
+}
+.device__frame {
+  position: relative;
+  aspect-ratio: 393 / 852;
+  border-radius: 34px;
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 0 0 1px var(--hair-strong),
+    var(--lift-2);
+}
+.device__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.device__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.04) 26%,
+    transparent 52%
+  );
+}
+.device__bezel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.14);
+}
+
+/* The rise. The pinned section writes its progress as --t and the phone
+   derives its travel from that — one transform, on the compositor, so the
+   scrub costs the main thread nothing. */
+.showcase__device {
+  transform: translateY(calc((1 - min(var(--t, 0) * 2.2, 1)) * 56px));
+  opacity: calc(0.4 + min(var(--t, 0) * 2.2, 1) * 0.6);
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase__device {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ═══ Statement ══════════════════════════════════════════════════════════
+   The page's recurring motion moment. Only colour and blur move — the line
+   is fully laid out from the first frame, so nothing reflows. */
+
+/* The measure is set in px, not ch: `.shell` sets 16px body text, so a ch
+   limit here would resolve against that and not against the 48px statement
+   it is actually constraining. */
+.statement .shell {
+  max-width: 980px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.statement__lead,
+.statement__warm {
+  text-wrap: balance;
+}
+
+.statement__lead {
+  color: var(--ink);
+}
+
+.statement__warm span {
+  /* --t runs 0→1 per word as it enters view. */
+  color: color-mix(in oklab, var(--ink) calc(var(--t) * 100%), var(--violet));
+  transition: filter 0.25s linear;
+}
+
+/* ═══ Split ══════════════════════════════════════════════════════════════ */
+
+.split__inner {
+  display: grid;
+  gap: var(--item-spacer-medium);
+}
+
+.split__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16px);
+  align-self: center;
+}
+
+.split__body {
+  max-width: 46ch;
+}
+
+/* Cleo's media runs large but never taller than a screen — past that the
+   text beside it drifts out of view and the pairing stops reading as one
+   unit. Capping the media's height is what keeps the two halves together. */
+.split__media {
+  max-height: 78vh;
+  display: flex;
+}
+.split__media > * {
+  max-height: 78vh;
+  width: 100%;
+}
+
+@media only screen and (min-width: 768px) {
+  .split__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--item-spacer-large);
+    align-items: center;
+  }
+  .split__inner--flip .split__media {
+    order: 2;
+  }
+}
+
+/* ═══ Media slots ════════════════════════════════════════════════════════ */
+
+.slot {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--border-radius-medium);
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+.slot > img,
+.slot > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A parallaxed image needs somewhere to travel, and it has to get it from
+   a transform rather than from being positioned.
+   `position:absolute; height:118%` was the obvious version and it was
+   wrong: `.panel__media .slot` is forced to `aspect-ratio:auto` and takes
+   its height from the image in flow, so taking the image out of flow
+   collapsed those slots from 525px to 0. The panels lost their media
+   entirely and their white captions ended up on the light page ground at
+   1.13:1.
+   The scale is applied in the JS transform alongside the translate, so
+   there is one transform on the element and nothing to fight over. */
+.slot--parallax > img,
+.slot--parallax > video {
+  will-change: transform;
+}
+
+/* Empty slots stay legible about what they are waiting for — the id maps
+   straight to a row in ASSETS.md. */
+.slot__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background:
+    var(--wash-soft),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 11px,
+      rgba(20, 18, 28, 0.035) 11px 22px
+    );
+  color: var(--ink-dim);
+  text-align: center;
+  padding: var(--spacing-16px);
+}
+.slot__empty .t-eyebrow {
+  color: var(--ink-dim);
+}
+
+.mediacard {
+  height: 100%;
+}
+.mediacard--tall {
+  aspect-ratio: 3 / 4;
+}
+/* White only where the card carries a dark scrim that earns it. */
+.media--scrim .mediacard__eyebrow,
+.media--scrim .mediacard__title {
+  color: #fff;
+}
+.mediacard__eyebrow,
+.mediacard__title {
+  color: var(--ink);
+}
+.mediacard__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+
+/* ═══ Figures ════════════════════════════════════════════════════════════ */
+
+/* Figures sitting inside a panel, above its caption. */
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-40px);
+  margin: 0;
+}
+.figures__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.figures__value {
+  margin: 0;
+  font-size: calc(
+    48px - 48px * var(--scale-modifier) + 100vw * 48 /
+      var(--target-window-width) * var(--scale-modifier)
+  );
+  font-weight: var(--fw-light);
+  line-height: 1.08333;
+  color: var(--ink);
+}
+.figures__value--accent {
+  color: var(--accent);
+}
+
+/* ═══ Product ════════════════════════════════════════════════════════════ */
+
+.product__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-medium);
+  max-width: 20ch;
+}
+
+/* Cleo's peach radial ground; ours is violet. */
+.product__wash,
+.chemistry__wash {
+  position: relative;
+  border-radius: var(--border-radius-large);
+  background:
+    radial-gradient(
+      90% 70% at 50% 0%,
+      rgba(107, 78, 255, 0.2) 0%,
+      rgba(107, 78, 255, 0.04) 55%,
+      transparent 80%
+    ),
+    var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  padding: var(--item-spacer-large) var(--item-spacer-medium);
+  overflow: hidden;
+}
+
+/* ── The rail ────────────────────────────────────────────────────
+   Sideways, not a grid. A grid of every screen reads as documentation of a
+   flow; a rail reads as a set of surfaces you are being shown. The
+   difference is not only editorial — a rail can hold back two screens
+   without leaving a hole where they were.
+
+   The last card is cut by the container's edge on purpose. That partial
+   card is the only affordance the rail needs: nothing signals "there is
+   more this way" as plainly as something visibly continuing off the edge,
+   and it costs no arrow, dot or instruction. */
+.product__rail {
+  list-style: none;
+  margin: 0;
+  display: flex;
+  gap: var(--item-spacer-medium);
+  overflow-x: auto;
+  /* Stops a sideways flick at the end of the rail from turning into a
+     browser back-swipe or a bounce of the whole page. */
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* Room for the scrollbar, so it never sits on top of the copy. */
+  padding: 0 0 var(--spacing-20px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--hair-strong) transparent;
+}
+.product__rail:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+.product__rail > li {
+  /* Fixed width, never shrinking: the cards have to keep their size as the
+     rail runs past the edge, which is the whole point of a rail. */
+  flex: 0 0 auto;
+  width: clamp(232px, 74vw, 300px);
+  scroll-snap-align: start;
+  display: grid;
+  gap: var(--spacing-16px);
+}
+.product__rail .phone-tile {
+  width: 100%;
+}
+.product__text {
+  display: grid;
+  gap: var(--spacing-8px);
+  align-content: start;
+}
+.product__body {
+  color: var(--ink-soft);
+}
+
+/* Past the phone the card turns on its side: the screen at a readable size
+   beside its own caption rather than above it. That is what lets four
+   cards be wider than the panel — stacked, four 300px cards fit inside
+   1764px with room to spare and the rail never scrolls, which makes it a
+   grid wearing a scrollbar. */
+@media only screen and (min-width: 768px) {
+  .product__rail > li {
+    width: clamp(400px, 30vw, 500px);
+    grid-template-columns: clamp(150px, 12vw, 200px) minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--spacing-24px);
+  }
+}
+
+/* App screenshots sit in a device-shaped frame so 393×852 never stretches. */
+.phone-tile {
+  position: relative;
+  aspect-ratio: 393 / 852;
+  border-radius: var(--border-radius-medium);
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    inset 0 0 0 1px var(--hair-strong),
+    var(--lift-2);
+}
+.phone-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.phone-tile--lg {
+  max-width: 300px;
+}
+
+/* `.device` is sized for the hero; in the product stage it is the subject
+   of the section and gets to be bigger. */
+.device--stage {
+  width: min(46vh, 300px);
+}
+
+/* Past the phone the rail gets more air between cards. It never becomes a
+   grid: four cards would fit across a wide screen, and the moment they all
+   fit the rail stops being a rail and starts being a row of everything
+   there is — which is the thing this section is deliberately not. */
+@media only screen and (min-width: 1000px) {
+  .product__rail {
+    gap: var(--item-spacer-large);
+  }
+}
+
+/* ═══ In the app ═════════════════════════════════════════════════════════ */
+
+.inapp__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-medium);
+}
+
+.inapp__stage {
+  position: relative;
+  border-radius: var(--border-radius-large);
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  /* The bottom used to carry double padding to clear a pill floating over
+     it. The pill is in the column now, so the stage is padded evenly. */
+  padding: var(--item-spacer-large) var(--item-spacer-medium);
+  overflow: hidden;
+}
+
+/* The pair is capped and centred rather than stretched across the stage.
+   Left to fill 1841px the phone went to one edge and a 34ch paragraph sat
+   alone in a 1416px column — nine hundred pixels of nothing between two
+   things that are meant to be read together. A panel this wide does not
+   need filling; it needs its contents held at a readable distance and the
+   air left around them. */
+.inapp__panel {
+  display: grid;
+  gap: var(--item-spacer-medium);
+  align-items: center;
+  justify-items: center;
+  max-width: 1040px;
+  margin-inline: auto;
+}
+
+/* The right-hand column: what this surface is called, what it does, and the
+   control that changes it — in that order, as one block. */
+.inapp__detail {
+  display: grid;
+  gap: var(--spacing-24px);
+  justify-items: center;
+}
+
+.inapp__surface {
+  color: var(--ink-dim);
+}
+
+.inapp__copy {
+  max-width: 34ch;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* The pill keeps its own look — translucent ground, lifted, filled active
+   tab — but sits in the column under the copy it rewrites. */
+.switcher {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--pill);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow:
+    inset 0 0 0 1px var(--hair),
+    var(--lift-2);
+  max-width: 100%;
+  overflow-x: auto;
+  /* The bar scrolls sideways on a narrow screen rather than wrapping or
+     overflowing the stage; hiding the scrollbar keeps it reading as a pill. */
+  scrollbar-width: none;
+}
+.switcher::-webkit-scrollbar {
+  display: none;
+}
+
+.switcher__tab {
+  padding: 11px 17px;
+  border-radius: var(--pill);
+  font-size: 14px;
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  color: var(--ink-soft);
+  transition:
+    background-color 0.35s var(--ease),
+    color 0.35s var(--ease);
+}
+.switcher__tab:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+/* Selected is violet-on-white, not ink-on-ink. The colour is doing the
+   work here because there is no other cue that a tab is chosen. */
+.switcher__tab.is-active,
+.switcher__tab.is-active:hover {
+  background: var(--violet);
+  color: #fff;
+}
+
+@media only screen and (max-width: 560px) {
+  .switcher {
+    /* Left-aligned once it scrolls, so the first tab is never half cut off. */
+    justify-content: flex-start;
+  }
+}
+
+.inapp__close {
+  margin-top: var(--item-spacer-medium);
+  max-width: 24ch;
+  color: var(--ink-soft);
+}
+
+@media only screen and (min-width: 768px) {
+  /* minmax(0, ...) and not 1fr: a grid track's default minimum is its
+     content, so the switcher's own scroll container would otherwise push
+     the column wider than the cap and the phone off the left. */
+  .inapp__panel {
+    grid-template-columns: 300px minmax(0, 1fr);
+    justify-items: start;
+    gap: clamp(40px, 4.5vw, 88px);
+  }
+  .inapp__detail {
+    justify-items: start;
+  }
+  .inapp__copy {
+    text-align: left;
+  }
+}
+
+/* ═══ Technology ═════════════════════════════════════════════════════════ */
+
+.tech__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 32ch;
+}
+
+.tech__pair {
+  display: grid;
+  gap: var(--item-spacer-large);
+}
+
+.tech__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16px);
+  align-items: flex-start;
+}
+.tech__col--them {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.tech__bubble {
+  padding: var(--spacing-20px) var(--spacing-24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tech__eyebrow-on {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tech__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+.tech__list li {
+  padding-left: var(--spacing-16px);
+  border-left: 1px solid var(--hair);
+}
+.tech__list--them li {
+  padding-left: 0;
+  padding-right: var(--spacing-16px);
+  border-left: 0;
+  border-right: 1px solid var(--hair);
+}
+
+.tech__layers {
+  list-style: none;
+  margin: var(--item-spacer-large) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--gutter-inner);
+}
+.tech__layer {
+  padding: var(--spacing-24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tech__num {
+  color: var(--accent);
+}
+
+@media only screen and (min-width: 768px) {
+  .tech__pair {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tech__layers {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ═══ Chemistry ══════════════════════════════════════════════════════════ */
+
+.chemistry__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 24ch;
+}
+
+.chemistry__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--gutter-inner);
+}
+.chemistry__tile {
+  padding: var(--spacing-24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chemistry__value {
+  margin: 0;
+  font-size: calc(
+    48px - 48px * var(--scale-modifier) + 100vw * 48 /
+      var(--target-window-width) * var(--scale-modifier)
+  );
+  font-weight: var(--fw-light);
+  line-height: 1.08333;
+  color: var(--accent);
+}
+
+.chemistry__safe {
+  margin-top: var(--item-spacer-large);
+  padding: var(--item-spacer-medium);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12px);
+}
+.chemistry__safe-copy {
+  max-width: 58ch;
+  color: var(--ink-soft);
+}
+
+@media only screen and (min-width: 768px) {
+  .chemistry__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ═══ Who ════════════════════════════════════════════════════════════════ */
+
+.who__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-24px);
+  margin-bottom: var(--item-spacer-medium);
+  flex-wrap: wrap;
+}
+.who__title {
+  margin-top: var(--spacing-12px);
+  max-width: 20ch;
+}
+.who__nav {
+  display: flex;
+  gap: var(--spacing-8px);
+}
+
+.who__card {
+  display: grid;
+  gap: var(--item-spacer-medium);
+  padding: var(--item-spacer-medium);
+  border-radius: var(--border-radius-medium);
+}
+.who__portrait {
+  border-radius: var(--border-radius-small);
+}
+.who__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16px);
+  align-self: center;
+}
+.who__pain {
+  max-width: 34ch;
+}
+.who__want {
+  max-width: 46ch;
+}
+.who__attrib {
+  margin-top: auto;
+}
+
+@media only screen and (min-width: 768px) {
+  .who__card {
+    grid-template-columns: 300px 1fr;
+    gap: var(--item-spacer-large);
+  }
+}
+
+/* ═══ Market ═════════════════════════════════════════════════════════════ */
+
+.market__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 22ch;
+}
+
+.market__figures {
+  list-style: none;
+  margin: 0 0 var(--item-spacer-large);
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-24px);
+}
+.market__figures li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--spacing-16px);
+  border-top: 1px solid var(--hair);
+}
+.market__value {
+  margin: 0;
+  font-size: calc(
+    48px - 48px * var(--scale-modifier) + 100vw * 48 /
+      var(--target-window-width) * var(--scale-modifier)
+  );
+  font-weight: var(--fw-light);
+  line-height: 1.08333;
+}
+
+.market__pair {
+  display: grid;
+  gap: var(--item-spacer-large);
+}
+.market__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12px);
+}
+.market__where {
+  margin-top: var(--spacing-8px);
+}
+.market__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+.market__list li {
+  padding-left: var(--spacing-16px);
+  border-left: 1px solid var(--hair);
+}
+
+@media only screen and (min-width: 640px) {
+  .market__figures {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media only screen and (min-width: 768px) {
+  .market__pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ═══ Where we sit ═══════════════════════════════════════════════════════ */
+
+.where__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 26ch;
+}
+
+.where__grid {
+  display: grid;
+  gap: var(--gutter-inner);
+}
+.where__card {
+  padding: var(--item-spacer-medium);
+}
+.where__name {
+  margin-bottom: var(--spacing-20px);
+}
+.where__dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.where__dl dd {
+  margin: 0 0 var(--spacing-12px);
+}
+.where__dl dd:last-child {
+  margin-bottom: 0;
+}
+
+.where__close {
+  margin-top: var(--item-spacer-large);
+  color: var(--accent);
+}
+
+@media only screen and (min-width: 768px) {
+  .where__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ═══ Roadmap ════════════════════════════════════════════════════════════ */
+
+.roadmap__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 22ch;
+}
+
+.roadmap__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--item-spacer-medium);
+  counter-reset: phase;
+}
+.roadmap__grid > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+.roadmap__role {
+  margin-top: var(--spacing-12px);
+  color: var(--accent);
+}
+.roadmap__lines {
+  list-style: none;
+  margin: var(--spacing-4px) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+
+.roadmap__status {
+  margin-top: var(--item-spacer-large);
+  padding: 9px 18px;
+  display: inline-block;
+  border-radius: var(--pill);
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+@media only screen and (min-width: 768px) {
+  .roadmap__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ═══ Team ═══════════════════════════════════════════════════════════════ */
+
+.team__title {
+  margin-block: var(--spacing-12px) var(--item-spacer-large);
+  max-width: 24ch;
+}
+
+.team__grid {
+  display: grid;
+  gap: var(--item-spacer-medium);
+}
+.team__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8px);
+}
+.team__name {
+  margin-top: var(--spacing-12px);
+}
+.team__bio {
+  max-width: 36ch;
+}
+
+/* Unfilled copy reads as unfilled — an invented bio is the one error on an
+   investor page that cannot be walked back. */
+.team__todo {
+  color: var(--ink-dim);
+  font-style: italic;
+}
+
+@media only screen and (min-width: 560px) {
+  .team__grid {
+    grid-template-columns: 1fr 1fr;
+    max-width: 760px;
+  }
+}
+/* ═══ FAQ ═══════════════════════════════════════════════════════
+
+   The panel is Cleo's, measured live at 1920: one centred box, 830px at the
+   target window, 88px of padding, 72px between the title and the stack, and
+   an 88px radius with the bottom-RIGHT corner squared. Those numbers are
+   read off web.meetcleo.com's computed styles; the colours are remapped to
+   ink-on-paper per tokens.css.
+
+   What sits inside it is ours. Cleo threads ragged content-width questions
+   down the left edge against full-width answers, which reads as a chat. We
+   stack uniform full-width cards instead, each question centred on its card
+   and its answer opening inside that same card under a hairline. Every card
+   is the same width and the same height shut, so the column has one centre
+   line and the open card is the only thing that breaks it.
+   ────────────────────────────────────────────────────────────────── */
+.faq__panel {
+  width: 100%;
+  /* Cleo's fluid 830px: fixed below the target window, growing past it. */
+  max-width: calc(
+    830px - 830px * var(--scale-modifier) + 100vw * 830 /
+      var(--target-window-width) * var(--scale-modifier)
+  );
+  margin-inline: auto;
+  display: grid;
+  row-gap: var(--spacing-48px);
+  padding: var(--spacing-64px) var(--spacing-24px);
+  /* Three values: the fourth corner inherits the second, so this is
+     TL / TR / BR-square / BL — the panel's own tail, bottom-right. */
+  border-radius: var(--border-radius-large) var(--border-radius-large) 0;
+  /* Cleo runs a near-invisible grey-to-ink wash at 178deg — not level, so
+     the panel reads as lit from slightly off-axis. Ours carries the same
+     angle and alpha, with the top stop tinted violet. */
+  background: linear-gradient(
+    178deg,
+    rgba(91, 61, 245, 0.05) 1.64%,
+    rgba(20, 18, 28, 0.055) 102.96%
+  );
+}
+
+.faq__head {
+  text-align: center;
+}
+
+.faq__title {
+  margin: var(--spacing-12px) 0 0;
+  /* The panel is the measure now — a 22ch cap would leave the centred
+     headline stranded in the middle of it. */
+  max-width: none;
+  text-wrap: balance;
+}
+
+.faq__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  row-gap: var(--spacing-16px);
+}
+
+.faq__turn {
+  width: 100%;
+}
+
+/* ── The card ────────────────────────────────────────────────────
+   One uniform card per question, full width of the panel, every card the
+   same size shut. The answer opens INSIDE the card it belongs to, under a
+   hairline, rather than arriving as a separate bubble - so the column reads
+   as a stack of equal cards opening in place.
+
+   The card is a div rather than the <li> itself because the <li> carries
+   .reveal, whose transition declaration is more specific than a single
+   class and would otherwise swallow the card's own hover transition. */
+.faq__card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* Its own ladder rather than --border-radius-medium: that token reaches
+     40px past 1280, and on an 88px-tall card 40px is a pill. A card in a
+     stack of five needs to read as a card, so the radius stays well under
+     half its height at every width. */
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--hair),
+    0 1px 2px rgba(20, 18, 28, 0.04);
+  transition:
+    box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.faq__card:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--hair-strong),
+    0 4px 14px rgba(20, 18, 28, 0.06);
+}
+/* The open card is the only thing on screen being read, so it carries the
+   only real elevation in the stack - four shut cards stay flat against the
+   panel and the answered one lifts off it. */
+.faq__card.is-open {
+  box-shadow:
+    inset 0 0 0 1px var(--hair-strong),
+    0 12px 32px rgba(20, 18, 28, 0.08);
+}
+/* A card is a control, so it answers the press itself rather than waiting
+   for the answer to arrive. Scaling the card and not the button keeps the
+   whole surface moving as one object. */
+.faq__card:has(.faq__q:active) {
+  transform: scale(0.996);
+}
+
+/* ── The question ────────────────────────────────────────────────
+   The label is centred on the card's own centre line, which is why the
+   toggle is taken out of flow instead of given a flex slot: a flex sibling
+   would push the text off centre by half the glyph's width, and the stack
+   would lose the one line every card is meant to share. The symmetric side
+   padding keeps a long question clear of the toggle from both sides. */
+.faq__q {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: var(--spacing-24px) var(--spacing-48px);
+  text-align: center;
+  border-radius: inherit;
+}
+
+.faq__label {
+  display: block;
+  /* Wide enough that every question in the set holds a single line on a
+     desktop card, which is what keeps the five shut cards the same height.
+     Below that it wraps, and `balance` splits it near the middle rather
+     than leaving one orphaned word under a full line. */
+  max-width: 54ch;
+  margin-inline: auto;
+  color: var(--ink);
+  text-wrap: balance;
+  transition: color var(--dur-fast) var(--ease-soft);
+}
+/* So the answered question is findable when four others are shut. */
+.faq__card.is-open .faq__label {
+  color: var(--accent);
+}
+
+.faq__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-12px);
+  /* `translate` and `rotate` as their own properties, not one `transform`:
+     the centring offset and the plus-to-cross turn would otherwise have to
+     share a single declaration, and the open state would drop the
+     centring. */
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  transition:
+    rotate var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease-soft),
+    color var(--dur-fast) var(--ease-soft);
+}
+/* 45 degrees turns the + into a x - one glyph rotated, not two swapped. */
+.faq__q.is-open .faq__toggle {
+  rotate: 45deg;
+  background: var(--accent);
+  color: var(--void);
+  box-shadow: none;
+}
+
+/* ── The answer's arrival ──────────────────────────────────────────
+   Height animates through a grid row going 0fr to 1fr. That lands on the
+   content's real height, so a long answer never clips and a short one never
+   drags a wrong-sized box behind it - and unlike `height: 0 to auto`, which
+   needs `interpolate-size: allow-keywords`, it works in Firefox and Safari
+   as well as Chrome. On a page meant to be opened by strangers that support
+   difference is worth more than the slightly tidier syntax.
+
+   The clip is a separate element because the row's collapse and the
+   answer's own movement are different motions; nested, the copy would be
+   sliding inside a box that is itself still growing. */
+.faq__reply {
+  display: grid;
+  grid-template-rows: 0fr;
+  width: 100%;
+  transition: grid-template-rows var(--dur-fast) var(--ease);
+}
+.faq__reply.is-open {
+  grid-template-rows: 1fr;
+}
+.faq__reply-clip {
+  /* Both are what let an fr row actually collapse to nothing. */
+  overflow: hidden;
+  min-height: 0;
+}
+
+.faq__a {
+  position: relative;
+  width: 100%;
+  padding: var(--spacing-24px) var(--spacing-24px) var(--spacing-32px);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-fast) var(--ease-soft),
+    transform var(--dur-fast) var(--ease);
+}
+/* The rule is inset from the card's edges and drawn as a pseudo-element
+   rather than a border, so it reads as a line under the question instead of
+   as the card being cut in two. */
+.faq__a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--spacing-24px);
+  right: var(--spacing-24px);
+  height: 1px;
+  background: var(--hair);
+}
+/* ── The typing indicator ─────────────────────────────────────────
+   Three dots shown for ~620ms before the words resolve. It is the one place
+   on the page where a deliberate delay earns its keep: the FAQ is written
+   as a conversation, and a reply that appears the instant you ask reads as
+   a database lookup rather than an answer.
+
+   The dots are laid over the copy rather than swapped for it, so the card
+   is already its final height - the words fade in without the box resizing
+   under them. Pinning the indicator to the answer's padding box and
+   centring inside it puts the dots on the copy's own centre line without
+   anyone having to work out where the first line starts. */
+.faq__typing {
+  position: absolute;
+  inset: var(--spacing-24px) var(--spacing-24px) var(--spacing-32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s var(--ease-soft);
+}
+.faq__typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  animation: faq-typing 1.05s var(--ease-soft) infinite;
+}
+.faq__typing i:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.faq__typing i:nth-child(3) {
+  animation-delay: 0.32s;
+}
+@keyframes faq-typing {
+  0%,
+  62%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.38;
+  }
+  31% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.faq__a.is-typing .faq__typing {
+  opacity: 1;
+}
+/* While the dots run, the answer is blurred out rather than hidden — the
+   shape of the paragraph stays, so the bubble never changes size and the
+   words resolve INTO focus instead of appearing from nothing. */
+.faq__a .faq__a-copy {
+  transition:
+    opacity 0.3s var(--ease-soft),
+    filter 0.3s var(--ease-soft);
+}
+.faq__a.is-typing .faq__a-copy {
+  opacity: 0;
+  filter: blur(7px);
+}
+
+.faq__reply.is-open .faq__a {
+  opacity: 1;
+  transform: none;
+  /* Held back just past the box's own opening, so the bubble reads as
+     landing in a space that was already made for it. */
+  transition-delay: 90ms;
+}
+/* Centred copy needs a shorter measure than ragged-left copy does: without
+   a fixed left edge to return to, a long line costs the eye the start of
+   the next one. This also keeps the answer narrower than its question's
+   card, so the two never read as the same block of text. */
+.faq__a-copy {
+  max-width: 52ch;
+  margin-inline: auto;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* The thread is a conversation, and a conversation does not animate for
+   someone who asked it not to. */
+@media (prefers-reduced-motion: reduce) {
+  .faq__card,
+  .faq__reply,
+  .faq__a,
+  .faq__toggle,
+  .faq__label,
+  .faq__q {
+    transition: none;
+  }
+  .faq__a {
+    opacity: 1;
+    transform: none;
+  }
+  .faq__typing {
+    display: none;
+  }
+  .faq__typing i {
+    animation: none;
+  }
+  .faq__a.is-typing .faq__a-copy {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .faq__panel {
+    row-gap: var(--spacing-56px);
+    padding: var(--spacing-80px);
+  }
+  .faq__items {
+    row-gap: var(--spacing-20px);
+  }
+  .faq__card {
+    border-radius: 24px;
+  }
+  .faq__q {
+    padding: var(--spacing-32px) var(--spacing-72px);
+  }
+  .faq__toggle {
+    right: var(--spacing-24px);
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+  }
+  .faq__a {
+    padding: var(--spacing-32px) var(--spacing-56px) var(--spacing-40px);
+  }
+  /* The rule and the dots are both pinned to the answer's own padding box,
+     so all three numbers move together at every breakpoint. */
+  .faq__a::before {
+    left: var(--spacing-56px);
+    right: var(--spacing-56px);
+  }
+  .faq__typing {
+    inset: var(--spacing-32px) var(--spacing-56px) var(--spacing-40px);
+  }
+}
+
+@media only screen and (min-width: 1280px) {
+  .faq__panel {
+    row-gap: var(--spacing-72px);
+    padding: var(--spacing-88px);
+  }
+}
+
+/* ═══ Contact page ═════════════════════════════════════════════
+   Its own page, not a section: contact.html. Two columns past 900px — the
+   form on the left doing the work, a narrow rail of context on the right —
+   collapsing to one column under it with the rail last, because on a phone
+   nobody reads three cards before reaching the field they came for. */
+
+.contact {
+  padding-top: calc(var(--header-gutter) + 112px);
+}
+
+.contact__head-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16px);
+  padding-bottom: var(--spacing-56px);
+}
+.contact__title {
+  margin: 0;
+  max-width: 16ch;
+}
+.contact__lead {
+  margin: 0;
+  max-width: 54ch;
+  color: var(--ink-soft);
+}
+
+.contact__body {
+  display: grid;
+  gap: var(--spacing-48px);
+  padding-bottom: var(--item-spacer-large);
+}
+
+/* ── The form ──────────────────────────────────────────────────── */
+
+.contact__form {
+  display: grid;
+  gap: var(--spacing-32px);
+  align-content: start;
+}
+
+.contact__routes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: var(--spacing-16px);
+}
+.contact__legend {
+  padding: 0;
+  color: var(--ink-soft);
+}
+.contact__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8px);
+}
+
+/* The radio itself is still there and still doing the work — it is moved
+   out of sight rather than removed, so arrow-key navigation, the form
+   value and :focus-visible all survive. */
+.contact__chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.contact__chip span {
+  display: block;
+  padding: 11px 20px;
+  border-radius: var(--pill);
+  font-size: 15px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  transition:
+    background-color 0.3s var(--ease),
+    color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+.contact__chip:hover span {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--hair-strong);
+}
+.contact__chip.is-on span {
+  background: var(--violet);
+  color: #fff;
+  box-shadow: none;
+}
+/* The ring has to be drawn on the visible half, since the input it belongs
+   to is a pixel wide and parked off to the side. */
+.contact__chip input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.contact__blurb {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.contact__grid {
+  display: grid;
+  gap: var(--spacing-24px);
+}
+
+.field {
+  display: grid;
+  gap: var(--spacing-8px);
+  margin: 0;
+}
+.field__label {
+  color: var(--ink-soft);
+}
+.field__opt {
+  /* Never the same weight as the label it qualifies. */
+  opacity: 0.6;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: var(--border-radius-small);
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  transition: box-shadow 0.3s var(--ease);
+}
+.field textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.5;
+}
+.field input:hover,
+.field textarea:hover {
+  box-shadow: inset 0 0 0 1px var(--hair-strong);
+}
+.field input:focus,
+.field textarea:focus {
+  outline: 0;
+  box-shadow: inset 0 0 0 2px var(--violet);
+}
+
+.contact__send {
+  display: grid;
+  gap: var(--spacing-16px);
+  justify-items: start;
+}
+.contact__send .pill__arrow {
+  transition: transform 0.4s var(--ease);
+}
+.contact__send .pill:hover .pill__arrow {
+  transform: translateX(4px);
+}
+.contact__note {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--ink-soft);
+}
+
+/* ── The rail ──────────────────────────────────────────────────── */
+
+.contact__aside {
+  display: grid;
+  gap: var(--spacing-16px);
+  align-content: start;
+}
+
+.contact__card {
+  display: grid;
+  gap: var(--spacing-12px);
+  padding: var(--spacing-32px);
+  border-radius: var(--border-radius-medium);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+.contact__label {
+  color: var(--ink-soft);
+}
+.contact__email {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.contact__copy {
+  justify-self: start;
+  padding: 9px 16px;
+  border-radius: var(--pill);
+  font-size: 14px;
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  transition:
+    color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+.contact__copy:hover {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--hair-strong);
+}
+
+.contact__asks {
+  display: grid;
+  gap: var(--spacing-8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+}
+/* A drawn rule rather than a bullet or a typed dash: these are things to
+   mention, not steps in an order, and a 1px box aligned to the first
+   line's optical centre stays put whether the item wraps or not. */
+.contact__asks li {
+  position: relative;
+  padding-left: 22px;
+}
+.contact__asks li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 12px;
+  height: 1px;
+  background: var(--violet);
+}
+
+@media only screen and (min-width: 900px) {
+  .contact__body {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--spacing-72px);
+  }
+  .contact__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .contact__head-inner {
+    padding-bottom: var(--spacing-72px);
+  }
+}
+
+/* ═══ Talk ═══════════════════════════════════════════════════════════════
+   The closing statement, composed after the dc-dev hero.
+
+   Five things make that composition what it is, and all five are reproduced
+   here rather than approximated:
+
+     1. a flat, slightly grey ground — not white. The reference's weight
+        comes from black type on grey, and a white page throws it away;
+     2. type so large it is the layout, at a leading under 1 so consecutive
+        lines very nearly touch;
+     3. a per-line indent that never repeats, so the column reads ragged;
+     4. a solid card dropped ON the type, interrupting a word mid-line —
+        the overlap is the idea, not a side effect of positioning;
+     5. small meta pinned into three corners, which is what makes the empty
+        middle read as deliberate rather than as a page still loading.
+
+   Only the card's colour is ours. The reference's is red; the brand's is
+   violet, and nothing else about the value structure moves.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.talk {
+  padding-block: var(--gutter-card);
+  padding-inline: var(--gutter-card);
+}
+
+.talk__stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--border-radius-card);
+  /* A step deeper than a normal panel. The reference ground is a real grey,
+     and --raised is barely off the page ground — on it the black type has
+     nothing to push against. */
+  background: var(--raised-2);
+  /* Tall enough to hold seven lines of display type and the corner meta,
+     capped so it does not become a scroll of its own on a short laptop. */
+  min-height: min(96vh, 900px);
+  /* The masthead is fixed and floats over whatever is under it, so the
+     stage's top edge cannot be trusted as a place to put anything. The top
+     padding is the masthead's own height plus its gutter; everything pinned
+     to the top of this panel starts below that line. */
+  padding: clamp(78px, 6vw, 108px) clamp(20px, 3.4vw, 60px)
+    clamp(20px, 3.4vw, 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── The ghosted wordmark ───────────────────────────────────────────────
+   Set into the ground rather than onto it: a shade off the panel and
+   nothing more. It is what stops the space behind the type reading as
+   empty, and it must never compete for attention — if it is legible as a
+   word before you look for it, it is too strong. */
+.talk__mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 0;
+  margin: 0;
+  font-size: clamp(140px, 27vw, 460px);
+  font-weight: var(--fw-medium);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: rgba(20, 18, 28, 0.032);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── The type ───────────────────────────────────────────────────────────
+   6.6% of the viewport's width, which is the reference's ratio, with a
+   floor and a ceiling so it neither disappears on a phone nor outgrows a
+   very wide monitor. The 0.88 leading is the signature: under 1, the lines
+   interlock and the block reads as one mass rather than seven headings. */
+.talk__type {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  width: 100%;
+  max-width: 1500px;
+  font-size: clamp(34px, 6.6vw, 132px);
+  font-weight: var(--fw-medium);
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+/* --x is a percentage of the block, set per line in Talk.jsx. Indenting
+   with margin rather than text-indent keeps each line a box of its own, so
+   a line that runs long wraps under its own indent instead of under the
+   block's left edge. */
+.talk__line {
+  display: block;
+  margin-left: calc(var(--x) * 1%);
+}
+
+/* ── The card ───────────────────────────────────────────────────────────
+   Absolutely placed, and placed to COLLIDE: it lands over the middle of the
+   column so the type runs behind it and comes out the other side.
+
+   The radius is a step under the panel ladder's smallest. On a card this
+   size 16px already reads as soft, and anything above it starts pulling
+   the card toward the rounded surfaces everywhere else on the page — this
+   one has to keep reading as something laid on top, not as another panel.
+   It matches the masthead bar, which is the page's other laid-on object. */
+.talk__card {
+  position: absolute;
+  z-index: 2;
+  left: 40%;
+  top: 31%;
+  width: clamp(250px, 20.5vw, 390px);
+  padding: clamp(16px, 1.5vw, 26px);
+  border-radius: 14px;
+  background: var(--violet);
+  color: #fff;
+  box-shadow: 0 26px 60px -34px rgba(47, 26, 143, 0.7);
+}
+
+.talk__card-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 clamp(14px, 1.4vw, 22px);
+  font-size: 14px;
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
+}
+.talk__card-brand img {
+  width: 26px;
+  height: auto;
+  /* The mark is drawn in violet; on a violet card it has to become the
+     card's foreground instead. */
+  filter: brightness(0) invert(1);
+}
+
+.talk__card-copy {
+  margin: 0 0 clamp(12px, 1.2vw, 18px);
+  font-size: clamp(13px, 0.78vw, 15px);
+  font-weight: var(--fw-medium);
+  line-height: 1.36;
+}
+/* The second paragraph is the detail behind the first, so it steps back —
+   on a saturated ground that step is opacity, never a second colour. */
+.talk__card-copy--soft {
+  font-weight: var(--fw-normal);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.talk__card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: clamp(10px, 1vw, 18px);
+  font-size: clamp(13px, 0.78vw, 15px);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.3s var(--ease);
+}
+.talk__card-link:hover {
+  opacity: 0.72;
+}
+
+/* ── The action ─────────────────────────────────────────────────────────
+   Hung on the card's right edge with its circle centred exactly on it, so
+   the edge cuts the disc in half. `left: 100%` puts the row at the edge and
+   the negative margin pulls it back by the circle's radius — which means
+   the alignment survives the card changing width at any breakpoint. */
+.talk__action {
+  position: absolute;
+  top: 26%;
+  left: 100%;
+  margin-left: calc(clamp(44px, 3vw, 58px) / -2);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 0.9vw, 16px);
+  white-space: nowrap;
+  color: var(--ink);
+}
+.talk__action-dot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 3vw, 58px);
+  height: clamp(44px, 3vw, 58px);
+  border-radius: 50%;
+  background: var(--void);
+  box-shadow: 0 10px 24px -12px rgba(20, 18, 28, 0.45);
+  transition:
+    transform 0.4s var(--ease),
+    background-color 0.4s var(--ease);
+}
+/* The mark keeps its violet on the near-white disc, exactly as it does in
+   the masthead — this is the brand appearing, not an icon being tinted. */
+.talk__action-dot img {
+  display: block;
+  width: 58%;
+  height: auto;
+}
+.talk__action:hover .talk__action-dot {
+  transform: scale(1.08);
+  background: #fff;
+}
+.talk__action-label {
+  display: grid;
+  gap: 2px;
+}
+.talk__action-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.talk__action-text {
+  font-size: clamp(13px, 0.82vw, 16px);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── The corners ────────────────────────────────────────────────────────
+   Three small blocks that frame the emptiness. The measure on the top-right
+   paragraph is deliberately absurd — around thirteen characters, six lines
+   for one sentence — because at that width it stops being copy and becomes
+   a texture in the corner, which is its whole job. */
+.talk__corner {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  font-size: clamp(11px, 0.68vw, 13px);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.talk__corner--tl {
+  left: clamp(20px, 3.4vw, 60px);
+  top: clamp(78px, 6vw, 108px);
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+.talk__spark {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink);
+}
+.talk__corner--tr {
+  right: clamp(20px, 3.4vw, 60px);
+  top: clamp(78px, 6vw, 108px);
+  max-width: 13ch;
+  text-align: right;
+}
+
+.talk__foot {
+  position: absolute;
+  z-index: 3;
+  left: clamp(20px, 3.4vw, 60px);
+  bottom: clamp(20px, 3.4vw, 60px);
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(28px, 5vw, 92px);
+}
+.talk__est {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0;
+  font-size: clamp(11px, 0.68vw, 13px);
+  color: var(--ink-soft);
+}
+/* "Est." rides above the year rather than beside it, which is what makes
+   the pair read as a stamp instead of a sentence. */
+.talk__est-label {
+  align-self: flex-start;
+  font-size: 10px;
+}
+.talk__est-year {
+  font-size: clamp(20px, 1.7vw, 32px);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.talk__est-slash {
+  font-size: clamp(14px, 1vw, 19px);
+  color: var(--ink);
+}
+.talk__trade {
+  margin: 0;
+  font-size: clamp(12px, 0.74vw, 14px);
+  font-weight: var(--fw-medium);
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+/* ── Under 900px ────────────────────────────────────────────────────────
+   The composition depends on a wide stage: a card dropped into the middle
+   of a narrow column does not interrupt the type, it buries it. So below
+   the breakpoint the overlap is abandoned rather than shrunk — the type
+   keeps a much gentler stagger, the card comes out of the stack and sits
+   under it at full width, and the corner meta goes back into normal flow.
+   It is a different layout that says the same thing, which is the honest
+   way to lose an effect that cannot survive the width. */
+@media only screen and (max-width: 899px) {
+  .talk__stage {
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(28px, 6vw, 48px);
+    padding: clamp(28px, 7vw, 48px) clamp(20px, 5vw, 40px);
+  }
+  .talk__mark {
+    font-size: 44vw;
+  }
+  .talk__type {
+    font-size: clamp(38px, 11vw, 68px);
+  }
+  /* A third of the desktop indent: enough to keep the ragged rhythm, not
+     enough to push a long word off the right edge of a phone. */
+  .talk__line {
+    margin-left: calc(var(--x) * 0.34%);
+  }
+  .talk__card,
+  .talk__corner,
+  .talk__foot {
+    position: static;
+  }
+  .talk__card {
+    width: 100%;
+    max-width: none;
+  }
+  .talk__corner--tr {
+    max-width: 34ch;
+    text-align: left;
+  }
+  .talk__action {
+    position: static;
+    margin: clamp(18px, 4vw, 26px) 0 0;
+    color: #fff;
+  }
+  .talk__action-kicker {
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .talk__foot {
+    justify-content: space-between;
+    gap: var(--spacing-24px);
+  }
+}
+
+
+/* ═══ Footer ═════════════════════════════════════════════════════════════ */
+
+.footer {
+  padding-block: var(--item-spacer-large) var(--item-spacer-medium);
+  border-top: 1px solid var(--hair);
+}
+
+.footer__inner {
+  display: grid;
+  gap: var(--item-spacer-medium);
+}
+
+.footer__mark {
+  width: 108px;
+  height: auto;
+}
+.footer__line {
+  margin-top: var(--spacing-16px);
+  max-width: 26ch;
+}
+
+.footer__label {
+  margin-bottom: var(--spacing-12px);
+}
+.footer__label--gap {
+  margin-top: var(--spacing-24px);
+}
+
+.footer__index ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.footer__link {
+  color: var(--ink-soft);
+  transition: color 0.3s var(--ease);
+}
+.footer__link:hover {
+  color: var(--ink);
+}
+
+.footer__base {
+  margin-top: var(--item-spacer-large);
+  padding-top: var(--spacing-24px);
+  border-top: 1px solid var(--hair);
+}
+.footer__base .t-micro {
+  max-width: 76ch;
+}
+
+@media only screen and (min-width: 768px) {
+  .footer__inner {
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: var(--item-spacer-large);
+  }
+}
+
+/* The removed tech pipeline left this closing line to carry the section. */
+.tech__close {
+  max-width: 62ch;
+  margin-top: var(--item-spacer-medium);
+}
+
+/* The hero's glow is an absolutely-positioned ::before at left/right -285px,
+   width 1995px, scaled 0.9 — its right edge lands at 1610 on a 1425 page.
+   `.hero` was overflow:visible, so that propagated through main, #root and
+   body (whose own overflow-x:hidden never got the chance to apply) and gave
+   the whole document 185px of sideways drag.
+   `clip` rather than `hidden`: it stops the overflow without making the hero
+   a scroll container. Nothing is lost visually — the hero is already
+   full-width, so its box is the viewport and the clipped part was off-screen. */
+.hero {
+  overflow-x: clip;
+}
+
+/* ── hero media ────────────────────────────────────────────────────
+   The app footage sits behind the type. The hero is `isolation:isolate`
+   with a ::before bloom at z-index -1, so the video goes in the DOM at 0
+   and the copy is lifted to 1 rather than fighting that stack. */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.hero__bg video,
+.hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The footage carries bright white UI cards that pass directly under the
+   headline. A flat wash is not enough on its own: the floor holds the
+   whole frame down, and the centre band is weighted harder because that is
+   where the type is.
+   Tuned by measuring the worst pixel under each line at seven points across
+   the clip, not by eye. Four candidates were tested: the first pass held the
+   headline at 9.9:1 where it needs 3, which is a scrim that has stopped
+   protecting type and started deleting the picture. This one measures
+   headline 5.5, sub-line 6.4, button 6.7 — real headroom over the 3/4.5
+   floors, and light enough that the footage still reads. One step lighter
+   again put the sub-line at 4.53, too close to the line to survive a
+   re-encode. */
+.hero__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      78% 62% at 50% 52%,
+      rgba(8, 7, 14, 0.74) 0%,
+      rgba(8, 7, 14, 0.5) 58%,
+      rgba(8, 7, 14, 0.32) 100%
+    ),
+    linear-gradient(rgba(8, 7, 14, 0.34), rgba(8, 7, 14, 0.34));
+}
+
+.hero--media {
+  isolation: isolate;
+}
+.hero--media .hero__inner {
+  position: relative;
+  z-index: 1;
+}
+.hero--media .hero__title {
+  color: #fff;
+}
+.hero--media .hero__sub {
+  color: rgba(255, 255, 255, 0.88);
+}
+/* The bloom was there to give an empty hero something to arrive into.
+   With footage behind the type it is just haze over the picture. */
+.hero--media::before {
+  display: none;
+}

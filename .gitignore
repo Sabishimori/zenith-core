@@ -1,0 +1,44 @@
+﻿# Dependencies
+node_modules/
+**/node_modules/
+
+# Production build outputs
+dist/
+**/dist/
+dist-ssr/
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Backup files
+*.bak
+.*.bak
+
+# External / Scraped reference dumps and reference recordings
+saveweb2zip-com-web-meetcleo-com/
+saveweb2zip-com-web-meetcleo-com.zip
+Revolut App-*.mp4
+
+# AI harness & local caches
+.impeccable/
+.claude/
+.codex/
+.agents/

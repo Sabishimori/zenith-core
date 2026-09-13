@@ -1,0 +1,611 @@
+/* Ported verbatim from v2.html — this is the approved visual system and
+   the reason the React build looks identical. Change tokens here, not in
+   components. The only edits on import were absolute image paths. */
+
+
+/* ══════════════════════════════════════════════════════════════
+   ZENITH v2 — structure and motion after thirtysixstudio.com
+   12-col grid (1425 / 10px pad) · col+offset placement ·
+   34/36 statement voice · masked word rolls · .animate→.anim ·
+   parallax float layer · custom cursor. Violet for their red.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ══ tokens — warm system, after web.meetcleo.com ══
+   Measured teardown lives in ../../CLEO-REFERENCE.md. The founder chose
+   Cleo's warm brown over Zenith's violet, so violet is retired from the
+   palette rather than kept as an accent. Warmth now comes from the
+   imagery and the peach gradients, not from a UI accent colour. */
+:root{
+  /* Cleo runs one ink at varying alpha instead of a separate grey ramp. */
+  --ground:#F8F6F2;            /* cream page */
+  --ink:#47201C;               /* warm brown — the only text colour */
+  --ink-soft:rgba(71,32,28,.55);
+  --ink-dim:rgba(71,32,28,.38);
+  --hair:rgba(71,32,28,.14);
+  --panel:#FFFFFF;             /* cards lift white off the cream */
+  --deep:#291210;              /* deeper brown, for scrims and dark panels */
+  --mauve:#AC9B98;
+  --accent:#47201C;            /* kept as a name so existing rules resolve */
+  --on-accent:#F8F6F2;
+  --float-op:0.05;
+  --backdrop:#EFEAE3;
+  --peach:#F6D9C4;             /* gradient warmth, never type */
+
+  /* PPNeueMontreal + SimplonMono are licensed per-domain and cannot ship
+     here. This is the system stack standing in; swapping in a free
+     Neue-Montreal-alike (Switzer / General Sans, Fontshare) is the single
+     biggest remaining fidelity gain. */
+  --sf:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',
+       'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono','JetBrains Mono','Roboto Mono',Menlo,monospace;
+
+  /* Cleo tops out at 48px — it is a product page, not an editorial one.
+     Hierarchy comes from weight and alpha, not from scale. */
+  --f-marquee:clamp(1.75rem,4vw,3rem);
+  --f-statement:clamp(1.6rem,3vw,3rem);   /* 48px ceiling */
+  --f-hero:clamp(2rem,4.4vw,3.5rem);
+  --f-num:1rem;
+  --f-tag:0.875rem;
+  --f-micro:0.875rem;                     /* mono eyebrow, 14px */
+  --f-small:1rem;                         /* 16px/1.5 body workhorse */
+
+  /* Nothing on Cleo is a hard rectangle. The asymmetric pair is the
+     signature: one square corner reads as a chat tail. */
+  --r-pill:88px;
+  --r-card:30px;
+  --r-panel:64px;
+  --r-bubble:20px 24px 24px 0;
+  --r-bubble-lg:32px 32px 32px 0;
+
+  --gut:10px;
+  --shell:1425px;
+  --sect:clamp(3rem,8vw,150px);
+
+  --k:cubic-bezier(0.15,0.9,0.34,0.95);
+  --k-inout:cubic-bezier(0.76,0,0.24,1);
+}
+
+/* Dark theme inverts onto the deep brown rather than going neutral black,
+   so the warmth survives the flip. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#1A0E0C;
+    --ink:#F8F6F2;
+    --ink-soft:rgba(248,246,242,.6);
+    --ink-dim:rgba(248,246,242,.4);
+    --hair:rgba(248,246,242,.16);
+    --panel:#2A1613;
+    --deep:#0E0605;
+    --accent:#F8F6F2;
+    --on-accent:#291210;
+    --float-op:0.07;
+    --backdrop:#241310;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#1A0E0C;
+  --ink:#F8F6F2;
+  --ink-soft:rgba(248,246,242,.6);
+  --ink-dim:rgba(248,246,242,.4);
+  --hair:rgba(248,246,242,.16);
+  --panel:#2A1613;
+  --deep:#0E0605;
+  --accent:#F8F6F2;
+  --on-accent:#291210;
+  --float-op:0.07;
+  --backdrop:#241310;
+}
+
+*{box-sizing:border-box;}
+html{scrollbar-color:var(--ink-dim) transparent;scrollbar-width:thin;scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ink-dim);border-radius:99px}
+::selection{background:var(--accent);color:var(--on-accent);}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sf);
+  font-optical-sizing:auto;
+  font-weight:400;
+  font-size:var(--f-small);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  transition:background-color .7s var(--k),color .7s var(--k);
+}
+h1,h2,h3,h4,p,figure,ul,ol,figcaption{margin:0;padding:0;}
+h1,h2,h3,h4{font-weight:400;font-size:inherit;}
+ul,ol{list-style:none;}
+img{display:block;max-width:100%;height:auto;}
+a{color:inherit;text-decoration:none;}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+em{font-style:normal;color:var(--ink);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px;}
+
+/* ══ 12-column grid, exactly as the reference sets it ══ */
+.container{
+  position:relative;
+  width:100%;max-width:var(--shell);
+  margin:0 auto;
+  padding:0 var(--gut) var(--sect);
+}
+.container.flush{padding-bottom:0;}
+.rule-b{border-bottom:1px solid var(--hair);}
+.row{display:flex;flex-wrap:wrap;}
+.col{padding:0 var(--gut);min-width:0;}
+.col-1{width:8.3333%}  .col-2{width:16.6667%} .col-3{width:25%}
+.col-4{width:33.3333%} .col-5{width:41.6667%} .col-6{width:50%}
+.col-7{width:58.3333%} .col-8{width:66.6667%} .col-9{width:75%}
+.col-10{width:83.3333%} .col-11{width:91.6667%} .col-12{width:100%}
+.offset-1{margin-left:8.3333%} .offset-2{margin-left:16.6667%}
+.offset-3{margin-left:25%}     .offset-7{margin-left:58.3333%}
+@media (max-width:900px){
+  .col{width:100% !important;margin-left:0 !important;}
+  .col + .col{margin-top:1.75rem;}
+}
+
+/* ══ centered section layout ══
+   Redesign direction, on request: away from the left-aligned editorial
+   grid (asymmetric label + statement columns) toward a centred, narrow-
+   column layout — eyebrow label, then headline, then intro line, all
+   centred and width-capped, with wider grids (stats, cards, phones)
+   free to use the full centred column below. Scoped to `main > section`
+   so the 12-col grid itself stays available if anything still needs it. */
+main > section .row{
+  flex-direction:column;
+  align-items:center;
+}
+main > section .row > .col{
+  width:100%;
+  max-width:920px;
+  margin-left:0 !important;
+}
+main > section .col-2.offset-3{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+main > section .num{font-size:var(--f-tag);margin-bottom:0;}
+main > section .small-title{margin-bottom:0;text-align:center;}
+main > section .statement{
+  text-align:center;
+  max-width:700px;
+  margin-inline:auto;
+}
+main > section .statement + p.small{
+  text-align:center;
+  max-width:620px;
+  margin-inline:auto;
+}
+
+/* ══ voices ══
+   Cleo's hierarchy is weight and alpha, not scale: display sits at 300,
+   body at 400, and secondary text is the same ink at ~55% rather than a
+   separate grey. Tracking is `normal` everywhere — no negative tracking. */
+.statement{
+  font-size:var(--f-statement);font-weight:300;
+  line-height:1.08;letter-spacing:normal;text-wrap:pretty;
+}
+/* the hero headline outranks the body statements */
+.head h1.statement{font-size:var(--f-hero);font-weight:300;line-height:1.05;letter-spacing:normal;}
+.statement + .statement{margin-top:1.4em;}
+/* Eyebrow label: mono, uppercase, preceded by a small square bullet —
+   Cleo marks every section opener this way. */
+.small-title{
+  font-family:var(--mono);
+  font-size:var(--f-micro);font-weight:450;
+  text-transform:uppercase;letter-spacing:0.02em;line-height:1.4;
+  margin-bottom:1.5rem;
+  display:inline-flex;align-items:center;gap:.6rem;
+}
+.small-title::before{
+  content:'';flex:none;
+  width:6px;height:6px;
+  background:currentColor;
+}
+.micro{
+  font-family:var(--mono);
+  font-size:var(--f-micro);font-weight:450;
+  text-transform:uppercase;letter-spacing:0.02em;line-height:1.4;
+  color:var(--ink-dim);
+}
+.num{font-family:var(--mono);font-size:var(--f-num);font-weight:450;letter-spacing:0.02em;color:var(--ink-soft);}
+.small{font-size:var(--f-small);font-weight:400;line-height:1.5;color:var(--ink-soft);}
+.small + .small{margin-top:1.1rem;}
+.accent{color:var(--ink);}
+
+/* ══ masked word roll — the Splitting.js mechanic ══ */
+.word-wrap{
+  display:inline-block;position:relative;overflow:hidden;
+  vertical-align:bottom;
+  padding-bottom:0.14em;
+}
+.word{
+  display:inline-block;
+  transform:translateY(115%);
+  transition:transform .9s var(--k);
+  transition-delay:calc(var(--wi,0) * 42ms);
+}
+.split.anim .word{transform:none;}
+html:not(.js) .word{transform:none;}
+
+/* ══ the animate → anim contract, verbatim ══ */
+.animate{opacity:0;}
+.animate.anim{opacity:1;transition:1s var(--k) .2s;}
+.animate-btn{opacity:0;visibility:hidden;}
+.animate-btn.anim{opacity:1;visibility:visible;transition:.7s var(--k-inout) .4s;}
+html:not(.js) .animate,html:not(.js) .animate-btn{opacity:1;visibility:visible;}
+
+/* ══ parallax float layer ══
+   The reference hides these (an easter egg); here they carry the
+   brand, so they stay visible but well under the type. */
+.float{
+  position:absolute;
+  pointer-events:none;
+  opacity:var(--float-op);
+  z-index:0;
+  will-change:transform;
+  /* pushed back so they read as depth rather than as content */
+  filter:blur(3px) saturate(.7);
+  transition:opacity .7s var(--k);
+  /* Sections clip with overflow:hidden, and these are deliberately parked
+     half off-canvas — without a fade, that clip plus the blur reads as a
+     smudged rectangle with a visible hard edge instead of a soft glow.
+     A radial mask fades the image to nothing before it reaches its own
+     box edge, so whatever the section slices off was already transparent. */
+  -webkit-mask-image:radial-gradient(ellipse closest-side,#000 0%,transparent 72%);
+  mask-image:radial-gradient(ellipse closest-side,#000 0%,transparent 72%);
+}
+.float img{width:100%;}
+.sm{width:160px}  .ms{width:250px}  .md{width:300px}
+.bg{width:400px}  .bgr{width:550px}
+@media (max-width:900px){
+  .sm{width:110px} .ms{width:150px} .md{width:180px}
+  .bg{width:210px} .bgr{width:260px}
+}
+.spin{animation:rotating 2s linear infinite;}
+@keyframes rotating{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.container > .row{position:relative;z-index:1;}
+
+/* Floats are absolutely placed against their section, and clipped so
+   an off-canvas one can never widen the page.
+   Sections used to force min-height:100svh with the content flex-centred
+   in it — a full screen per section, thirtysixstudio-style. On any
+   section whose content ran shorter than the viewport (most of them,
+   at desktop heights) that left the actual text floating in a mostly
+   empty screen: too much dead air around too little copy, and the copy
+   read as small simply for having so much blank space around it. Sizing
+   to content instead — the vertical rhythm between sections still comes
+   from `--sect`, .container's own trailing padding — reads as a denser,
+   more substantial page at any viewport height, which matters more here
+   than the one-screen-per-scroll effect did. */
+main > section{
+  position:relative;overflow:hidden;
+}
+main > section > .container{width:100%;}
+
+/* ══ hero card ══
+   A rounded panel inset from the page edges: wordmark and a short
+   note across the top, a full-bleed image filling the rest, with
+   information tucked into its two bottom corners. */
+.head{
+  display:block;                 /* overrides the one-screen flex centring */
+  padding:var(--gut);
+  background:var(--backdrop);
+}
+.hero-card{
+  position:relative;
+  height:calc(100svh - (var(--gut) * 2));
+  min-height:520px;
+  border-radius:var(--r-card);
+  overflow:hidden;
+  background:var(--panel);
+  display:flex;flex-direction:column;
+  transition:background-color .7s var(--k);
+}
+.hero-top{
+  display:grid;grid-template-columns:1fr;gap:1.5rem;
+  padding:clamp(4.25rem,7vw,6rem) clamp(1.25rem,2.6vw,2.75rem) clamp(1.25rem,2vw,2rem);
+}
+@media (min-width:900px){
+  .hero-top{grid-template-columns:minmax(0,1fr) minmax(280px,24rem);align-items:start;gap:clamp(2rem,4vw,4rem);}
+}
+.hero-word{
+  font-size:clamp(3rem,11.5vw,10rem);
+  font-weight:500;line-height:.86;letter-spacing:-0.045em;
+  display:flex;align-items:flex-start;
+}
+.hero-word sup{
+  font-size:.17em;font-weight:500;line-height:1;
+  margin-left:.12em;margin-top:.32em;letter-spacing:0;
+}
+.hero-note{display:flex;flex-direction:column;gap:.9rem;}
+.hero-note-head{display:flex;align-items:center;gap:.75rem;}
+.hero-chip{
+  width:34px;height:34px;border-radius:50%;flex:none;
+  background:var(--ground);border:1px solid var(--hair);
+  display:grid;place-items:center;overflow:hidden;
+}
+.hero-chip img{width:112%;max-width:none;}
+.hero-rule{flex:1;height:1px;background:var(--hair);}
+.hero-note p{font-size:var(--f-small);line-height:1.5;color:var(--ink-soft);}
+
+/* The axolotl mark is a violet asset and the palette is now warm brown, so
+   it reads as a foreign colour on every surface it sits on. Filtering it to
+   the brown family is a stopgap — the real fix is a re-coloured export of
+   mark.webp / mascot.webp, which needs the image pipeline (see
+   ../../CLEO-REFERENCE.md §3). */
+.brand img,.hero-chip img,.float img{
+  filter:grayscale(1) sepia(1) saturate(1.6) hue-rotate(-18deg) brightness(.72);
+}
+
+.hero-figure{
+  position:relative;flex:1 1 auto;min-height:0;overflow:hidden;
+  margin:0 clamp(.6rem,1vw,1rem) clamp(.6rem,1vw,1rem);
+  border-radius:24px;
+}
+.hero-figure > img{width:100%;height:100%;object-fit:cover;}
+/* The source photo is a studio product shot: the coin sits on a plain
+   light-grey backdrop with wide empty margins either side of it. The
+   desktop card is wide enough that object-fit:cover fits the full image
+   width without cropping, so that flat grey shows edge-to-edge instead of
+   being cropped away — jarring against the dark theme's near-black card.
+   Scaling up crops into those margins so the frame reads as moss and
+   flowers, not studio backdrop. Scoped to the desktop crop only: below
+   760px .hero-figure switches to a 4:5 portrait box, where cover already
+   zooms in hard to fill the taller frame — stacking this zoom on top of
+   that would crop into the coin itself. */
+@media (min-width:761px){
+  .hero-figure > img{transform:scale(1.45);}
+}
+.hero-figure::after{           /* keeps the corner text legible over the art */
+  content:'';position:absolute;inset:0;pointer-events:none;
+  /* Stops are in px, not %: the figure is 602px tall on desktop and 439px
+     at 4/5 on a phone, and percentage stops slid the dark band below the
+     caption there — 2.93:1. Anchored to the bottom edge it holds at 6.1:1
+     in both, and still clears the top of the frame. */
+  background:linear-gradient(to top,rgba(0,0,0,.76) 0,rgba(0,0,0,.62) 160px,rgba(0,0,0,.22) 250px,transparent 320px);
+}
+.hero-corner{
+  position:absolute;z-index:2;
+  left:clamp(1rem,2vw,2rem);bottom:clamp(1rem,2vw,1.75rem);
+  max-width:min(52ch,58%);color:#fff;
+}
+.hero-corner p{color:rgba(255,255,255,.92);}
+.hero-tags{display:flex;flex-wrap:wrap;gap:.4rem .9rem;margin-top:.9rem;}
+.hero-tags span{font-size:var(--f-micro);font-weight:500;text-transform:uppercase;
+  letter-spacing:.03em;color:rgba(255,255,255,.78);}
+.hero-float{
+  position:absolute;z-index:2;
+  right:clamp(1rem,2vw,1.75rem);bottom:clamp(1rem,2vw,1.75rem);
+  width:clamp(190px,17vw,235px);
+  background:var(--ground);border-radius:20px;overflow:hidden;
+  box-shadow:0 18px 44px -18px rgba(0,0,0,.55);
+}
+.hero-float .shot{display:block;aspect-ratio:16/10;overflow:hidden;background:var(--panel);}
+.hero-float .shot img{width:100%;height:100%;object-fit:cover;object-position:center top;}
+.hero-float .meta{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem .8rem .75rem;}
+.hero-float .meta > span{display:block;min-width:0;}
+.hero-float .meta b{display:block;font-weight:500;font-size:var(--f-small);}
+.hero-float .meta span{font-size:var(--f-micro);color:var(--ink-dim);}
+.hero-float .go{width:22px;height:22px;flex:none;color:var(--ink-dim);}
+@media (max-width:760px){
+  .hero-card{height:auto;min-height:0;}
+  .hero-figure{aspect-ratio:4/5;flex:none;}
+  .hero-float{display:none;}
+  .hero-corner{max-width:none;right:clamp(1rem,2vw,2rem);}
+}
+
+/* ══ skip link ══
+   WCAG 2.4.1: a keyboard user should be able to jump the masthead instead of
+   tabbing every nav item before reaching the page. */
+.skip{
+  position:fixed;top:0;left:0;z-index:210;
+  padding:.7rem 1.1rem;
+  background:var(--accent);color:var(--on-accent);
+  font-size:var(--f-micro);font-weight:500;
+  text-transform:uppercase;letter-spacing:.06em;
+  border-radius:0 0 10px 0;
+  transform:translateY(-130%);
+  transition:transform .25s var(--k);
+}
+.skip:focus{transform:none;}
+
+/* ══ masthead ══ */
+.masthead{
+  position:fixed;inset:0 0 auto;z-index:80;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:15px;
+  transition:background-color .7s var(--k);
+}
+.masthead.settled{background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(14px);}
+.brand{display:inline-flex;align-items:center;gap:9px;min-height:34px;}
+.brand img{height:22px;width:auto;}
+.brand b{font-weight:500;font-size:var(--f-small);}
+/* Cleo's nav is sentence case at body size, grouped in a soft pill —
+   not the uppercase micro-label the old editorial system used. */
+.nav{display:flex;align-items:center;gap:1.35rem;}
+.nav a:not(.pill){
+  font-size:var(--f-small);font-weight:450;
+  letter-spacing:normal;color:var(--ink-soft);transition:color .4s var(--k);
+}
+.nav a:not(.pill):hover{color:var(--ink);}
+/* 24px is the WCAG 2.5.8 AA floor; the reference runs these at 18px.
+   Touch gets the full 44px further down. */
+.nav a:not(.pill),.foot-col a{display:inline-flex;align-items:center;min-height:24px;}
+@media (max-width:680px){.nav a:not(.pill){display:none;}}
+
+/* Buttons are 88px-radius pills at body size, sentence case. Cleo runs two:
+   a cream one on dark/photographic grounds, and a solid ink one on cream. */
+.pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:48px;padding:0 1.6rem;
+  border:1px solid var(--hair);border-radius:var(--r-pill);
+  background:var(--panel);
+  font-size:var(--f-small);font-weight:450;letter-spacing:normal;
+  transition:background-color .4s var(--k),color .4s var(--k),border-color .4s var(--k);
+}
+.pill:hover{background:var(--ink);color:var(--on-accent);border-color:var(--ink);}
+.pill-solid{background:var(--ink);color:var(--on-accent);border-color:var(--ink);}
+.pill-solid:hover{background:var(--deep);border-color:var(--deep);color:var(--on-accent);}
+.theme-btn{
+  width:40px;height:40px;flex:none;display:grid;place-items:center;
+  border:1px solid var(--hair);border-radius:50%;
+  transition:border-color .4s var(--k),color .4s var(--k);
+}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);}
+.theme-btn svg{width:15px;height:15px;}
+.theme-btn .moon{display:none;}
+:root[data-theme="dark"] .theme-btn .moon{display:block}
+:root[data-theme="dark"] .theme-btn .sun{display:none}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .theme-btn .moon{display:block}
+  :root:not([data-theme="light"]) .theme-btn .sun{display:none}
+}
+
+/* (previous hero styles removed — replaced by the hero card above) */
+
+/* ══ marquee ══ */
+.marquee{overflow:hidden;border-block:1px solid var(--hair);padding-block:0.1em;user-select:none;}
+.marquee-track{display:flex;width:max-content;animation:slide 46s linear infinite;}
+.marquee-track > span{font-size:var(--f-marquee);line-height:1;letter-spacing:-0.02em;white-space:pre;padding-right:0.1em;}
+.marquee .dot{color:var(--accent);}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){
+  .marquee-track,.spin{animation:none}
+  .scroll-word svg{animation:none}
+  .word{transform:none;transition:none}
+}
+
+/* ══ media ══ */
+.media{border-radius:var(--r-card);overflow:hidden;background:var(--panel);transition:background-color .7s var(--k);}
+.media img{width:100%;}
+.media-pad{padding:clamp(1.25rem,3.5vw,2.5rem);}
+figcaption{margin-top:0.85rem;}
+
+/* ══ service columns ══ */
+/* Card treatment, on request: bordered tiles instead of bare text in a
+   grid, closer to the reference's boxed "roadblock" cards. */
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1.25rem;}
+.svc > div{
+  border:1px solid var(--hair);border-radius:20px;
+  padding:1.35rem 1.5rem;
+  transition:border-color .4s var(--k);
+}
+.svc h4{margin-bottom:0.9rem;}
+.svc li{font-size:var(--f-small);color:var(--ink-soft);padding-block:0.26rem;transition:color .4s var(--k);}
+@media (hover:hover) and (pointer:fine){.svc li:hover{color:var(--accent);}}
+
+/* ══ notes ══ */
+.note{border:1px dashed var(--hair);border-radius:20px;padding:clamp(1.1rem,2.5vw,1.75rem);display:flex;flex-direction:column;gap:0.7rem;}
+.note .micro{color:var(--accent);}
+.note p,.note li{color:var(--ink-soft);font-size:var(--f-small);}
+.note li{padding-block:0.15rem;}
+.note li::before{content:'— ';}
+
+/* ══ product screens ══
+   Ported from v2's second <style> block, which was dropped when v2.css
+   was split out — .phone, .layer, .metric, .persona, .flag and .phase
+   had no rules at all, so their content rendered unstyled and unclipped
+   (phone mockups overflowing their cards, the Tech layer list with no
+   spacing). Restored verbatim. */
+/* Housed in one soft panel, on request — matching the reference's
+   grouped device mockups instead of screenshots floating individually. */
+.phones{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:20px;align-items:start;
+  background:var(--backdrop);border-radius:var(--r-card);
+  padding:clamp(1.5rem,3.5vw,2.75rem);
+  transition:background-color .7s var(--k);
+}
+/* the four-up row needs a narrower track or the last tile wraps alone */
+.phones-4{grid-template-columns:repeat(auto-fit,minmax(155px,1fr));}
+.phone{border-radius:24px;overflow:hidden;background:var(--panel);transition:background-color .7s var(--k);}
+.phone img{width:100%;display:block;}
+.step-n{margin-top:1rem;}
+.step-n b{display:block;font-weight:500;font-size:var(--f-small);margin-bottom:.2rem;color:var(--ink);}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1.75rem 20px;}
+.metric .v{font-size:clamp(1.9rem,3.4vw,2.6rem);line-height:1;letter-spacing:-0.02em;color:var(--accent);}
+.metric .k{margin-top:.5rem;}
+.layers{display:flex;flex-direction:column;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:20px;overflow:hidden;}
+.layer{background:var(--ground);padding:1rem 1.15rem;display:flex;gap:1rem;align-items:baseline;transition:background-color .7s var(--k);}
+.layer i{font-style:normal;color:var(--accent);font-size:var(--f-micro);font-weight:500;letter-spacing:.03em;flex:none;}
+.layer span{font-size:var(--f-small);}
+.persona{border-top:1px solid var(--hair);padding-top:1.25rem;}
+.persona h4{font-size:var(--f-statement);line-height:1.1;letter-spacing:-0.005em;margin-bottom:.35rem;}
+.flag{
+  display:inline-flex;align-items:center;gap:.45rem;
+  font-size:var(--f-micro);font-weight:500;text-transform:uppercase;letter-spacing:.03em;
+  color:var(--ink-soft);border:1px solid var(--hair);border-radius:var(--r-pill);padding:.35rem .75rem;
+}
+.phase{border-left:2px solid var(--accent);padding-left:1rem;}
+.phase + .phase{margin-top:1.75rem;}
+
+/* Running prose in the wide text column reached 88ch at desktop widths,
+   past the 65-75ch comfortable measure. Caps the line only where the column
+   is wider than that; narrower breakpoints are unaffected. */
+.col-7 > p.small,
+.col-7 .phase > p.small{max-width:68ch;}
+
+/* ══ custom cursor ══
+   Split into two elements on purpose. `#cursor` is a zero-size positioning
+   anchor: Motion writes the pointer's x/y to its `transform` every frame.
+   `.cursor-dot` is the actual visible ring, using the independent CSS
+   `translate`/`scale` properties for centring and the hover-grow.
+   They used to be the same element, which turned out not to compose the
+   way the previous comment here assumed: Chrome multiplies whatever
+   Motion writes to `transform` by that element's OWN `scale` — confirmed
+   by direct measurement, not spec-reading — so the dot's tracked position
+   was scaled down by 0.2692× (its resting scale) toward the corner on
+   every frame. That's why the ring sat well off from the real pointer.
+   Keeping position and scale on separate elements means neither transform
+   ever multiplies the other. */
+.cursor{
+  position:fixed;top:0;left:0;z-index:200;
+  width:52px;height:52px;
+  pointer-events:none;
+}
+.cursor-dot{
+  position:absolute;top:0;left:0;
+  /* Always a 52px box, scaled down to the 14px dot. Growing it used to
+     animate width/height, which lays out and paints on every frame of the
+     hover; `scale` composites instead. */
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);
+  pointer-events:none;opacity:0;
+  translate:-50% -50%;
+  scale:0.2692;
+  transition:opacity .3s var(--k),scale .4s var(--k),
+             background-color .4s var(--k),border-color .4s var(--k);
+  mix-blend-mode:normal;
+}
+.cursor.on .cursor-dot{opacity:.9}
+.cursor.wide .cursor-dot{scale:1;background:transparent;border:1px solid var(--accent);}
+@media (hover:none),(pointer:coarse){.cursor{display:none}}
+/* The custom cursor is meant to replace the native pointer, not sit next
+   to it — otherwise the browser's own arrow stays visible the whole time
+   alongside the dot. `!important` is needed to beat button{cursor:pointer}
+   above; a bare `html{cursor:none}` wouldn't reach it or links anyway,
+   since the browser's own per-element default on <a>/<button> is a direct
+   rule on that element and wins over an inherited value regardless of
+   specificity. Scoped to the same fine-pointer devices the dot itself
+   requires, so touch and coarse-pointer input keep their native cursor. */
+@media (hover:hover) and (pointer:fine){*{cursor:none !important;}}
+
+/* ══ footer ══ */
+footer{border-top:1px solid var(--hair);padding:clamp(2.5rem,5vw,4rem) 0 15px;}
+.foot-grid{display:flex;flex-wrap:wrap;gap:2rem 20px;justify-content:space-between;}
+.foot-col{display:flex;flex-direction:column;gap:0.35rem;min-width:155px;}
+.foot-col a{font-size:var(--f-small);color:var(--ink-soft);transition:color .4s var(--k);}
+.foot-col a:hover{color:var(--accent);}
+.foot-base{margin-top:clamp(2.5rem,5vw,4rem);display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.75rem 2rem;}
+@media (pointer:coarse),(max-width:860px){
+  /* display comes from the base rule; re-declaring it here would out-order
+     the <=680px hide above and put the links back on phones. */
+  .nav a:not(.pill),.foot-col a{align-items:center;min-height:44px;}
+  .foot-col{gap:0;}
+  .pill{min-height:44px;padding-inline:1.35rem;}
+  .theme-btn{width:44px;height:44px;}
+  .brand{min-height:44px;}
+}
